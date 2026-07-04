@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal — Tweet Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg: #0b0f0d;
+    --panel: #111713;
+    --line: #24302a;
+    --acid: #c8ff3d;
+    --acid-dim: #9ad12b;
+    --text: #eef2ee;
+    --text-dim: #8a978d;
+    --danger: #ff5d5d;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding: 40px 20px 80px;
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing: 0.18em;
+    color: var(--acid);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom: 10px;
+  }
+
+  .dot{
+    width:7px; height:7px; border-radius:50%;
+    background: var(--acid);
+    box-shadow: 0 0 8px var(--acid);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes pulse{
+    0%,100%{ opacity:1; }
+    50%{ opacity: 0.35; }
+  }
+
+  h1{
+    font-family:'Archivo Black', sans-serif;
+    font-size: clamp(32px, 6vw, 52px);
+    line-height: 0.95;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+
+  .sub{
+    color: var(--text-dim);
+    font-size: 15px;
+    max-width: 480px;
+    text-align:center;
+    margin-bottom: 36px;
+  }
+
+  .container{
+    width:100%;
+    max-width: 620px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 28px;
+  }
+
+  label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  textarea{
+    width:100%;
+    min-height: 130px;
+    background: #0b0f0d;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  textarea:focus{
+    border-color: var(--acid-dim);
+  }
+
+  .row{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    margin-top: 18px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  select{
+    background: #0b0f0d;
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 3px;
+    outline:none;
+  }
+
+  button.generate{
+    background: var(--acid);
+    color: #0b0f0d;
+    border: none;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 13px 22px;
+    border-radius: 3px;
+    cursor: pointer;
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+  }
+
+  button.generate:hover:not(:disabled){
+    box-shadow: 0 0 0 3px rgba(200,255,61,0.15);
+  }
+
+  button.generate:active:not(:disabled){
+    transform: scale(0.98);
+  }
+
+  button.generate:disabled{
+    background: #3a4239;
+    color: #7a847c;
+    cursor: not-allowed;
+  }
+
+  .bars{
+    display:flex;
+    gap: 3px;
+    align-items:flex-end;
+    height: 14px;
+  }
+
+  .bars span{
+    width: 3px;
+    background: #0b0f0d;
+    animation: bar 0.9s ease-in-out infinite;
+  }
+
+  .bars span:nth-child(1){ height: 40%; animation-delay: 0s; }
+  .bars span:nth-child(2){ height: 100%; animation-delay: 0.15s; }
+  .bars span:nth-child(3){ height: 65%; animation-delay: 0.3s; }
+  .bars span:nth-child(4){ height: 85%; animation-delay: 0.45s; }
+
+  @keyframes bar{
+    0%,100%{ transform: scaleY(0.4); }
+    50%{ transform: scaleY(1); }
+  }
+
+  .hidden{ display:none !important; }
+
+  .output-wrap{
+    margin-top: 28px;
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
+  }
+
+  .output-label{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .output-label span{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--acid);
+    text-transform: uppercase;
+  }
+
+  .char-count{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .char-count.over{ color: var(--danger); }
+
+  .tweet-card{
+    background: #0b0f0d;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--acid);
+    border-radius: 3px;
+    padding: 18px;
+    font-size: 16px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .copy-btn{
+    margin-top: 14px;
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .copy-btn:hover{
+    border-color: var(--acid-dim);
+    color: var(--acid);
+  }
+
+  .copy-btn.copied{
+    border-color: var(--acid);
+    color: var(--acid);
+  }
+
+  .error{
+    margin-top: 16px;
+    color: var(--danger);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    display:none;
+  }
+
+  footer{
+    margin-top: 24px;
+    color: var(--text-dim);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+  <div class="eyebrow"><span class="dot"></span>ON AIR</div>
+  <h1>SIGNAL</h1>
+  <p class="sub">Feed it today's raw content. It broadcasts back a tweet built to stop the scroll.</p>
+
+  <div class="container">
+    <label for="input">Today's content / notes / draft</label>
+    <textarea id="input" placeholder="Paste your update, idea, announcement, or rough thoughts here..."></textarea>
+
+    <div class="row">
+      <select id="tone">
+        <option value="bold and punchy">Tone: Bold &amp; punchy</option>
+        <option value="witty and clever">Tone: Witty &amp; clever</option>
+        <option value="professional and authoritative">Tone: Professional</option>
+        <option value="conversational and relatable">Tone: Conversational</option>
+      </select>
+
+      <button class="generate" id="genBtn">
+        <span id="btnLabel">Generate tweet</span>
+        <span class="bars hidden" id="bars"><span></span><span></span><span></span><span></span></span>
+      </button>
+    </div>
+
+    <p class="error" id="errorMsg"></p>
+
+    <div class="output-wrap hidden" id="outputWrap">
+      <div class="output-label">
+        <span>Broadcast ready</span>
+        <span class="char-count" id="charCount">0 / 280</span>
+      </div>
+      <div class="tweet-card" id="tweetOutput"></div>
+      <button class="copy-btn" id="copyBtn">Copy tweet</button>
+    </div>
+  </div>
+
+  <footer>Powered by Claude — every generation costs a few seconds, make them count.</footer>
+
+<script>
+const genBtn = document.getElementById('genBtn');
+const btnLabel = document.getElementById('btnLabel');
+const bars = document.getElementById('bars');
+const input = document.getElementById('input');
+const tone = document.getElementById('tone');
+const outputWrap = document.getElementById('outputWrap');
+const tweetOutput = document.getElementById('tweetOutput');
+const charCount = document.getElementById('charCount');
+const copyBtn = document.getElementById('copyBtn');
+const errorMsg = document.getElementById('errorMsg');
+
+function setLoading(isLoading){
+  genBtn.disabled = isLoading;
+  btnLabel.textContent = isLoading ? 'Broadcasting...' : 'Generate tweet';
+  bars.classList.toggle('hidden', !isLoading);
+}
+
+function updateCharCount(text){
+  const len = text.length;
+  charCount.textContent = `${len} / 280`;
+  charCount.classList.toggle('over', len > 280);
+}
+
+async function generateTweet(){
+  const content = input.value.trim();
+  errorMsg.style.display = 'none';
+
+  if(!content){
+    errorMsg.textContent = 'Add some content first — paste your notes, draft, or idea above.';
+    errorMsg.style.display = 'block';
+    return;
+  }
+
+  setLoading(true);
+  outputWrap.classList.add('hidden');
+
+  const systemPrompt = `You are an elite social media strategist who has grown multiple accounts to millions of followers on X (Twitter). You write tweets engineered to maximize impressions while remaining 100% factually accurate to the source content — never exaggerate, never invent claims or numbers that aren't implied by the input.
+
+Rules for every tweet you write:
+- Open with a strong hook in the first line (curiosity, bold claim, contrarian angle, surprising number, or a direct question) — this is what stops the scroll.
+- Keep it tight: ideally 150-260 characters total, never exceed 280.
+- Use line breaks strategically for readability and rhythm, not dense paragraphs.
+- Include 1-3 relevant, non-spammy hashtags only if they genuinely fit — never force them.
+- No corporate fluff, no generic phrases like "excited to announce" or "game changer" unless the input's own tone calls for it.
+- Do not use em dashes.
+- Match the requested tone precisely.
+- Output ONLY the final tweet text. No preamble, no explanation, no quotation marks around it, no markdown.`;
+
+  const userPrompt = `Content/notes for today:\n"""${content}"""\n\nTone: ${tone.value}\n\nWrite the single best possible tweet from this.`;
+
+  try{
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [
+          { role: "user", content: userPrompt }
+        ]
+      })
+    });
+
+    if(!response.ok){
+      throw new Error(`Request failed (${response.status})`);
+    }
+
+    const data = await response.json();
+    const textBlock = data.content.find(b => b.type === 'text');
+    const tweet = textBlock ? textBlock.text.trim() : '';
+
+    if(!tweet){
+      throw new Error('No tweet returned.');
+    }
+
+    tweetOutput.textContent = tweet;
+    updateCharCount(tweet);
+    outputWrap.classList.remove('hidden');
+    copyBtn.textContent = 'Copy tweet';
+    copyBtn.classList.remove('copied');
+  }catch(err){
+    console.error(err);
+    errorMsg.textContent = 'Something went wrong generating the tweet. Try again.';
+    errorMsg.style.display = 'block';
+  }finally{
+    setLoading(false);
+  }
+}
+
+copyBtn.addEventListener('click', async () => {
+  try{
+    await navigator.clipboard.writeText(tweetOutput.textContent);
+    copyBtn.textContent = 'Copied ✓';
+    copyBtn.classList.add('copied');
+    setTimeout(() => {
+      copyBtn.textContent = 'Copy tweet';
+      copyBtn.classList.remove('copied');
+    }, 1800);
+  }catch(err){
+    errorMsg.textContent = 'Could not copy — select the text manually.';
+    errorMsg.style.display = 'block';
+  }
+});
+
+genBtn.addEventListener('click', generateTweet);
+
+input.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && (e.metaKey || e.ctrlKey)){
+    generateTweet();
+  }
+});
+</script>
+
+</body>
+</html>
