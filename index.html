@@ -361,18 +361,29 @@ Rules for every tweet you write:
   const userPrompt = `Content/notes for today:\n"""${content}"""\n\nTone: ${tone.value}\n\nWrite the single best possible tweet from this.`;
 
   try{
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [
-          { role: "user", content: userPrompt }
-        ]
-      })
-    });
+    const response = await fetch("/api/generate", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    content,
+    tone: tone.value
+  })
+});
+
+if (!response.ok) {
+  const err = await response.text();
+  throw new Error(err);
+}
+
+const data = await response.json();
+
+tweetOutput.textContent = data.tweet;
+updateCharCount(data.tweet);
+outputWrap.classList.remove("hidden");
+copyBtn.textContent = "Copy tweet";
+copyBtn.classList.remove("copied");
 
     if(!response.ok){
       throw new Error(`Request failed (${response.status})`);
